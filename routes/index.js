@@ -10,10 +10,11 @@ module.exports = router;
 // a reusable function
 function respondWithAllTweets (req, res, next){
 
-  client.query("SELECT * FROM tweets", function(err,result){
+  client.query("SELECT * FROM tweets JOIN users ON tweets.user_id = users.id", function(err,result){
     if(err) return next(err);
     var tweets = result.rows;
-    console.log(tweets);
+
+  //  console.log(tweets);
     res.render('index', {title:'Twitter.js', tweets: tweets, showForm: true});
   });
 }
@@ -24,22 +25,42 @@ router.get('/tweets', respondWithAllTweets);
 
 // single-user page
 router.get('/users/:username', function(req, res, next){
-  var tweetsForName = tweetBank.find({ name: req.params.username });
-  res.render('index', {
-    title: 'Twitter.js',
-    tweets: tweetsForName,
-    showForm: true,
-    username: req.params.username
+console.log('it works up here');
+
+
+var nameString = `SELECT * FROM tweets JOIN users ON tweets.user_id = users.id WHERE users.name = '${req.params.username}'`
+
+
+
+  client.query(nameString, function(err,result){
+    if(err) return next(err);
+    var tweets = result.rows;
+    console.log('req params users=========',req.params.username, 'tweets======',tweets);
+    res.render('index', {title:'Twitter.js', tweets: tweets, showForm: true});
   });
+
+
+
+
+  // var tweetsForName = tweetBank.find({ name: req.params.username });
+  // res.render('index', {
+  //   title: 'Twitter.js',
+  //   tweets: tweetsForName,
+  //   showForm: true,
+  //   username: req.params.username
+  // });
 });
 
 // single-tweet page
 router.get('/tweets/:id', function(req, res, next){
-  var tweetsWithThatId = tweetBank.find({ id: Number(req.params.id) });
-  res.render('index', {
-    title: 'Twitter.js',
-    tweets: tweetsWithThatId // an array of only one element ;-)
-  });
+  console.log(req.params.id);
+    client.query(`SELECT tweets.id, content, name, picture_url FROM tweets JOIN users ON tweets.user_id = users.id WHERE tweets.id = '${req.params.id}'`, function(err,result){
+      if(err) return next(err);
+      var tweets = result.rows;
+      console.log(tweets);
+      res.render('index', {title:'Twitter.js', tweets: tweets, showForm: true});
+
+    });
 });
 
 // create a new tweet
